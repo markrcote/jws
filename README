@@ -1,0 +1,3 @@
+jws is a Python module for generating and verifying JSON Web Signatures[1].
+
+[1] http://tools.ietf.org/html/draft-jones-json-web-signature-04
