@@ -11,58 +11,47 @@ import unittest
 class TestHmac(unittest.TestCase):
 
     payload = '{"iss":"joe",\r\n "exp":1300819380,\r\n "http://example.com/is_root":true}'
+    jws_repr = 'eyJ0eXAiOiJKV1QiLA0KICJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFtcGxlLmNvbS9pc19yb290Ijp0cnVlfQ.dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk'
 
-    def otest_sha256_no_key(self):
-        headers_b64 = base64.urlsafe_b64encode('{"alg":"HS256","typ":"JWT"}')
-        payload_b64 = base64.urlsafe_b64encode(self.payload)
-        signature_b64 = base64.urlsafe_b64encode(hashlib.sha256(
-                headers_b64 + '.' + payload_b64).digest())
-        jws_repr = headers_b64 + '.' + payload_b64 + '.' + signature_b64
+    key = ''.join([chr(i) for i in [3, 35, 53, 75, 43, 15, 165, 188, 131, 126, 6, 101, 119, 123, 166, 143, 90, 179, 40, 230, 240, 84, 201, 40, 169, 15, 132, 178, 210, 80, 46, 191, 211, 251, 90, 146, 210, 6, 71, 239, 150, 138, 180, 195, 119, 98, 61, 34, 61, 46, 33, 114, 5, 46, 79, 8, 192, 205, 154, 245, 103, 208, 128, 163]])
 
-        j = jws.JwsSha256()
-        msg = j.encode(self.payload, 'JWT')
-        self.assertEqual(msg, jws_repr)
-        self.assertEqual(j.decode(jws_repr),
+    def test_sha256(self):
+        j = jws.JwsHmacSha()
+        self.assertEqual(j.decode(self.jws_repr, self.key),
                          { 'headers': {u'alg': u'HS256', u'typ': u'JWT'},
                            'payload': self.payload,
                            'valid': True })
 
-    def test_sha256_with_key(self):
-        keys = {'mykeyid': 'myverysecretkey'}
-        headers_b64 = base64.urlsafe_b64encode('{"alg":"HS256","typ":"JWT","kid":"mykeyid"}')
-        payload_b64 = base64.urlsafe_b64encode(self.payload)
-        digest = hmac.new('myverysecretkey', headers_b64 + '.' + payload_b64,
-                          hashlib.sha256).digest()
-        signature_b64 = base64.urlsafe_b64encode(digest)
-        jws_repr = headers_b64 + '.' + payload_b64 + '.' + signature_b64
-
-        j = jws.JwsSha256(keys)
-        msg = j.encode(self.payload, 'JWT', 'mykeyid')
-        self.assertEqual(msg, jws_repr)
-        self.assertEqual(j.decode(jws_repr),
-                         { 'headers': {u'alg': u'HS256', u'kid': 'mykeyid', u'typ': u'JWT'},
+        # this implementation encodes headers to JSON in a slightly different
+        # way than the RFC, so to test the example, we'll just use the
+        # raw header string.
+        headers_str = '{"typ":"JWT",\r\n "alg":"HS256"}'
+        self.assertEqual(j.encode_strings(headers_str, self.payload, self.key),
+                         self.jws_repr)
+        
+        # test encoding and decoding using key id
+        j = jws.JwsHmacSha(keydict={'secret': self.key, 'secret2': 'abcd'})
+        self.assertEqual(j.decode(j.encode(self.payload, 'JWT',
+                                           key_id='secret')),
+                         { 'headers': {u'alg': u'HS256', u'typ': u'JWT',
+                                       u'kid': u'secret'},
                            'payload': self.payload,
                            'valid': True })
 
-        # use an incorrect key
-        digest = hmac.new('thewrongkey', headers_b64 + '.' + payload_b64,
-                          hashlib.sha256).digest()
-        signature_b64 = base64.urlsafe_b64encode(digest)
-        jws_repr = headers_b64 + '.' + payload_b64 + '.' + signature_b64
+        # test some errors
+        with self.assertRaises(jws.KeyRequiredException):
+            j.encode(self.payload)
+        with self.assertRaises(jws.KeyNotFoundException):
+            j.encode(self.payload, key_id='notfound')
 
-        self.assertEqual(j.decode(jws_repr),
-                         { 'headers': {u'alg': u'HS256', u'kid': 'mykeyid', u'typ': u'JWT'},
-                           'payload': self.payload,
-                           'valid': False })
-
-        # use missing key
-        self.assertRaises(jws.KeyIdNotFoundException, j.encode, self.payload,
-                          'JWT', 'missingkeyid')
-
-        headers_b64 = base64.urlsafe_b64encode('{"alg":"HS256","typ":"JWT","kid":"missingkeyid"}')
-        signature_b64 = base64.urlsafe_b64encode(digest)
-        jws_repr = headers_b64 + '.' + payload_b64 + '.' + signature_b64
-        self.assertRaises(jws.KeyIdNotFoundException, j.decode, jws_repr)
+        msg = j.encode(self.payload, key=self.key)
+        with self.assertRaises(jws.KeyRequiredException):
+            j.decode(msg)
+        
+        msg = j.encode(self.payload, key=self.key, key_id='secret')
+        with self.assertRaises(jws.KeyNotFoundException): 
+            jws.JwsHmacSha(keydict={'wrongkid': self.key}).decode(msg)
+       
 
 if __name__ == '__main__':
     unittest.main()
