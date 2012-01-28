@@ -24,8 +24,7 @@ also stored as the 'kid' header.  An exception is raised if no key id is
 given, if the key dict is not present, or if the key id is not found in
 the dict.
 
-encode() returns the standard base64-encoded JWS representation,
-<headers>.<payload>.<signature>
+encode() returns the standard base64-encoded JWS representation.
 
 
 Decoding
