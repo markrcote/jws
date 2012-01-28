@@ -71,7 +71,13 @@ Examples:
     {'headers': {u'alg': u'HS512', u'kid': u'key1'}, 'valid': True, 'payload':
     'microfilm obtained'}
 
-    >>> # errors
+    >>> # decode directly with wrong key
+    >>> j2.decode(msg, key='1234')
+    {'headers': {u'alg': u'HS512', u'kid': u'key1'}, 'valid': False, 'payload':
+    'microfilm obtained'}
+
+
+    >>> # exceptions
 
     >>> # can't decode without either a key or a keydict
     >>> j2.decode(msg)
