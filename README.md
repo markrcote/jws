@@ -19,9 +19,10 @@ If a key is given, it is always used.  If a key id is also given, it is
 merely recorded as the 'kid' header.
 
 If a key is not given, the key id is used to look up the associated key from
-the key dictionary provided to the Jws object's constructor.  An exception is
-raised if no key id is given, or if the key dict is not present, or if the key
-id is not found in the dict, an appropriate exception is raised.
+the key dictionary provided to the Jws object's constructor.  The key id is
+also stored as the 'kid' header.  An exception is raised if no key id is
+given, if the key dict is not present, or if the key id is not found in
+the dict.
 
 encode() returns the standard base64-encoded JWS representation,
 <headers>.<payload>.<signature>
