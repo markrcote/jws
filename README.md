@@ -1,5 +1,5 @@
-jws is a Python module for generating and verifying [JSON Web Signatures][1].
-This allows you to easily authenticate web data.
+jws is a Python module for generating and verifying [JSON Web Signatures][1],
+a format for authenticated web data.
 
 Usage is intended to hide as many details of JWS as possible from the user,
 while allowing extension to future protocols.
