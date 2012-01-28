@@ -76,6 +76,13 @@ Examples:
     {'headers': {u'alg': u'HS512', u'kid': u'key1'}, 'valid': False, 'payload':
     'microfilm obtained'}
 
+    >>> # can encode with given key and set arbitrary key id
+    >>> msg2 = j2.encode('{"temp":28}', key='7890', key_id='key3')
+    >>> jws.JwsHmacSha(bits=512, keydict={'key3': '7890', 'key4': 'wxyz'}) \
+    >>>     .decode(msg2)
+    {'headers': {u'alg': u'HS512', u'kid': u'key3'}, 'valid': True, 'payload':
+    '{"temp":28}'}
+
 
     >>> # exceptions
 
@@ -100,13 +107,6 @@ Examples:
       File "jws/__init__.py", line 103, in get_key_from_dict
         raise KeyRequiredException()
     jws.KeyRequiredException: a key is required but was not provided
-
-    >>> # can encode with given key and set arbitrary key id
-    >>> msg2 = j2.encode('{"temp":28}', key='7890', key_id='key3')
-    >>> jws.JwsHmacSha(bits=512, keydict={'key3': '7890', 'key4': 'wxyz'}) \
-    >>>     .decode(msg2)
-    {'headers': {u'alg': u'HS512', u'kid': u'key3'}, 'valid': True, 'payload':
-    '{"temp":28}'}
 
     >>> # can't decode a message if key not given and key id not found in dict
     >>> jws.JwsHmacSha(bits=512, keydict={'key5':'./*-'}).decode(msg2)
